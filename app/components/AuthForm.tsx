@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/app/hooks/useAuth';
+import { useLanguage } from '@/app/hooks/useLanguage';
 
 type AuthMode = 'login' | 'register';
 
@@ -15,6 +17,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login, register, isLoading } = useAuth();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,75 +38,98 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          {mode === 'login' ? 'Login' : 'Cadastro'}
-        </h2>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full max-w-md mx-auto"
+    >
+      <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/20">
+        <motion.h2
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-500 mb-8"
+        >
+          {mode === 'login' ? t.auth.login : t.auth.register}
+        </motion.h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-200">
+              {t.auth.email}
             </label>
-            <input
+            <motion.input
+              whileFocus={{ scale: 1.02 }}
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50 backdrop-blur-sm transition-all"
               required
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Senha
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-200">
+              {t.auth.password}
             </label>
-            <input
+            <motion.input
+              whileFocus={{ scale: 1.02 }}
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              placeholder={t.auth.passwordMin}
+              className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50 backdrop-blur-sm transition-all"
               required
               minLength={6}
             />
           </div>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading || !email || !password}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-lg transition-colors"
+            className="w-full mt-6 bg-gradient-to-r from-orange-400 to-yellow-500 hover:from-orange-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg shadow-orange-500/50 hover:shadow-orange-500/75 disabled:shadow-none"
           >
-            {isLoading ? 'Processando...' : mode === 'login' ? 'Entrar' : 'Cadastrar'}
-          </button>
+            {isLoading ? t.auth.processing : t.auth.submit}
+          </motion.button>
         </form>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg backdrop-blur-sm"
+          >
+            <p className="text-red-400 text-sm font-medium">{error}</p>
+          </motion.div>
         )}
 
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            {mode === 'login' ? 'Não tem conta?' : 'Já tem conta?'}
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
-                setError('');
-              }}
-              className="ml-2 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              {mode === 'login' ? 'Cadastre-se' : 'Faça login'}
-            </button>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 pt-6 border-t border-white/10 text-center"
+        >
+          <p className="text-sm text-gray-400 mb-3">
+            {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}
           </p>
-        </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            type="button"
+            onClick={() => {
+              setMode(mode === 'login' ? 'register' : 'login');
+              setError('');
+            }}
+            className="text-orange-400 hover:text-orange-300 font-semibold transition-colors"
+          >
+            {mode === 'login' ? t.auth.signUp : t.auth.signIn}
+          </motion.button>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

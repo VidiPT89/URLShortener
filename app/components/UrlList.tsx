@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useLanguage } from '@/app/hooks/useLanguage';
 
 interface ShortenedUrl {
   id: string;
@@ -20,6 +22,7 @@ export function UrlList({ token, refresh }: UrlListProps) {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!token) return;
@@ -36,7 +39,7 @@ export function UrlList({ token, refresh }: UrlListProps) {
         });
 
         if (!response.ok) {
-          throw new Error('Erro ao carregar URLs');
+          throw new Error(t.urls.empty);
         }
 
         const data = await response.json();
@@ -49,76 +52,100 @@ export function UrlList({ token, refresh }: UrlListProps) {
     };
 
     fetchUrls();
-  }, [token, refresh]);
+  }, [token, refresh, t.urls.empty]);
 
   if (!token) {
     return (
-      <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-blue-700">Faça login para ver suas URLs encurtadas</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center p-6 bg-blue-500/10 border border-blue-500/50 rounded-xl backdrop-blur-sm"
+      >
+        <p className="text-blue-400 font-medium">{t.urls.loginRequired}</p>
+      </motion.div>
     );
   }
 
   if (isLoading) {
-    return <div className="text-center text-gray-500">Carregando...</div>;
+    return (
+      <div className="text-center p-6">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+        <p className="text-gray-400 mt-2 text-sm">Carregando...</p>
+      </div>
+    );
   }
 
-  if (error) {
+  if (error && urls.length === 0) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700 text-sm">{error}</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center p-6 bg-yellow-500/10 border border-yellow-500/50 rounded-xl backdrop-blur-sm"
+      >
+        <p className="text-yellow-400">{t.urls.empty}</p>
+      </motion.div>
     );
   }
 
   if (urls.length === 0) {
     return (
-      <div className="text-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <p className="text-gray-600">Nenhuma URL encurtada ainda. Comece criando uma!</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center p-6 bg-white/10 border border-white/20 rounded-xl backdrop-blur-sm"
+      >
+        <p className="text-gray-400">{t.urls.empty}</p>
+      </motion.div>
     );
   }
 
   return (
-    <div className="w-full">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">Minhas URLs Encurtadas</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 border-b-2 border-gray-300">
-              <th className="px-4 py-2 text-left font-semibold text-gray-700">URL Curta</th>
-              <th className="px-4 py-2 text-left font-semibold text-gray-700">URL Original</th>
-              <th className="px-4 py-2 text-left font-semibold text-gray-700">Cliques</th>
-              <th className="px-4 py-2 text-left font-semibold text-gray-700">Criada em</th>
-            </tr>
-          </thead>
-          <tbody>
-            {urls.map((url) => (
-              <tr key={url.id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <a
-                    href={`/${url.code}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 font-mono text-sm break-all"
-                  >
-                    {url.code}
-                  </a>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 truncate" title={url.originalUrl}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full"
+    >
+      <h3 className="text-2xl font-bold text-white mb-6">{t.urls.title}</h3>
+      <div className="grid gap-4">
+        {urls.map((url, index) => (
+          <motion.div
+            key={url.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="p-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:border-orange-400/50 transition-all hover:shadow-lg hover:shadow-orange-500/20"
+          >
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1">
+                <a
+                  href={`/${url.code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-400 hover:text-orange-300 font-mono text-sm break-all transition-colors"
+                >
+                  🔗 {url.code}
+                </a>
+                <p className="text-xs text-gray-400 mt-1 truncate" title={url.originalUrl}>
                   {url.originalUrl}
-                </td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                  {url.clicks}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {new Date(url.createdAt).toLocaleDateString('pt-BR')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-6 text-sm">
+                <div className="text-center">
+                  <p className="text-gray-400 text-xs">Cliques</p>
+                  <p className="text-lg font-bold text-yellow-400">{url.clicks}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-gray-400 text-xs">Criada</p>
+                  <p className="text-xs text-gray-300">
+                    {new Date(url.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

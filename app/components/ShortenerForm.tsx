@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useLanguage } from '@/app/hooks/useLanguage';
 
 interface ShortenedUrlResponse {
   id: string;
@@ -21,6 +23,7 @@ export function ShortenerForm({ token, onSuccess }: ShortenerFormProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<ShortenedUrlResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,7 @@ export function ShortenerForm({ token, onSuccess }: ShortenerFormProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao encurtar URL');
+        throw new Error(error.error || t.form.error);
       }
 
       const data = await response.json();
@@ -52,7 +55,7 @@ export function ShortenerForm({ token, onSuccess }: ShortenerFormProps) {
       setUrl('');
       onSuccess?.(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : t.form.error);
     } finally {
       setIsLoading(false);
     }
@@ -70,60 +73,84 @@ export function ShortenerForm({ token, onSuccess }: ShortenerFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full max-w-2xl mx-auto"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-700">
-            Cole sua URL aqui
+        <div className="space-y-2">
+          <label htmlFor="url" className="block text-sm font-semibold text-gray-200">
+            {t.form.placeholder}
           </label>
-          <input
+          <motion.input
+            whileFocus={{ scale: 1.02 }}
             id="url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://exemplo.com/pagina-muito-longa"
-            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            placeholder={t.form.placeholder}
+            className="w-full px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50 backdrop-blur-sm transition-all"
             required
           />
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={isLoading || !url}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-lg transition-colors"
+          className="w-full bg-gradient-to-r from-orange-400 to-yellow-500 hover:from-orange-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-orange-500/50 hover:shadow-orange-500/75 disabled:shadow-none"
         >
-          {isLoading ? 'Encurtando...' : 'Encurtar URL 🔗'}
-        </button>
+          {isLoading ? t.form.buttonLoading : `🔗 ${t.form.button}`}
+        </motion.button>
       </form>
 
+      {/* Error Message */}
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl backdrop-blur-sm"
+        >
+          <p className="text-red-400 text-sm font-medium">{error}</p>
+        </motion.div>
       )}
 
+      {/* Success Message */}
       {success && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">URL encurtada com sucesso!</p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 p-6 bg-green-500/10 border border-green-500/50 rounded-xl backdrop-blur-sm space-y-4"
+        >
+          <p className="text-green-400 text-sm font-semibold">{t.form.success}</p>
           <div className="flex items-center gap-2">
             <input
               type="text"
               value={success.shortUrl}
               readOnly
-              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm font-mono"
+              className="flex-1 px-4 py-3 bg-black/30 border border-green-500/30 rounded-lg text-green-300 text-sm font-mono focus:outline-none"
             />
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={copyToClipboard}
-              className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+              className={`px-4 py-3 rounded-lg font-semibold transition-all ${
+                copied
+                  ? 'bg-green-500/30 text-green-300'
+                  : 'bg-green-500/20 text-green-400 hover:bg-green-500/40'
+              }`}
             >
-              {copied ? '✓ Copiado' : 'Copiar'}
-            </button>
+              {copied ? '✓ ' : '📋 '}
+              {copied ? t.form.copied : t.form.copy}
+            </motion.button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Cliques: {success.createdAt ? new Date(success.createdAt).toLocaleDateString('pt-BR') : 'Agora'}
+          <p className="text-xs text-gray-400">
+            {t.urls.clicks}: 0 | Criada em: {new Date(success.createdAt).toLocaleDateString()}
           </p>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
